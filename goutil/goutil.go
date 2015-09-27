@@ -1,12 +1,13 @@
 package goutil
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
 )
 
-func saveFile(data []byte, filename string) {
+func SaveFile(data []byte, filename string) {
 	f, err1 := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err1 != nil {
 		return
@@ -15,14 +16,14 @@ func saveFile(data []byte, filename string) {
 	f.WriteString(string(data[:len(data)]))
 }
 
-func str2Time() {
+func Str2Time() {
 	var testDate = "1439557418"
 	testInt, _ := strconv.ParseInt(testDate, 10, 64)
 	tm := time.Unix(testInt, 0)
 	fmt.Println(tm)
 }
 
-func time2Str() {
+func Time2Str() {
 	tstr := strconv.FormatInt(time.Now().Unix(), 10)
 	fmt.Println(tstr)
 }
