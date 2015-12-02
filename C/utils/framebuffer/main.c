@@ -9,252 +9,7 @@
 
 static int Xres, Yres;
 
-int test_color_1(char *fbp, int fbfd, int xres, int yres)
-{
-	int seg_len = 0;  
-	int tmp_seg_len = 0;  
-	int seg_num = 0;  
-	unsigned int  rgb = 0;  
-	unsigned int r = 0, g = 0, b = 0;  
-	unsigned long location = 0;  
-	int x = 0, y = 0;  
-
-#if 1  
-	seg_len = yres/6;  
-	for (seg_num = 0; seg_num < 6; seg_num++) {  
-		if (seg_num == 5)   
-			tmp_seg_len = yres - seg_len*5;  
-		else   
-			tmp_seg_len = seg_len;  
-
-		for (y = 0; y < tmp_seg_len; y++) {  
-			for (x = 0; x < xres; x++) {  
-				location = seg_num*seg_len*xres*4 + (y*xres+ x)*4;  
-				switch (seg_num) {  
-					case 0:  
-						r = 0xff;  
-						g = (0xff/seg_len)*y;  
-						b = 0;  
-						break;  
-					case 1:  
-						r = (0xff/seg_len)*(seg_len-y);  
-						g = 0xff;  
-						b = 0;  
-						break;  
-					case 2:  
-						r = 0;  
-						g = 0xff;  
-						b = (0xff/seg_len)*y;   
-						break;  
-					case 3:  
-						r = 0;  
-						g = (0xff/seg_len)*(seg_len-y);  
-						b = 0xff;  
-						break;  
-					case 4:  
-						r =  (0xff/seg_len)*y;    
-						g = 0;  
-						b = 0xff;  
-						break;  
-					case 5:  
-						r = 0xff;  
-						b = (0xff/seg_len)*(seg_len-y);   
-						g = 0;  
-						break;  
-					default:  
-						printf("%s--%d:unknown seg_num %d\n", __FILE__, __LINE__, seg_num);  
-						break;  
-				}  
-
-				r = (r*0x1f)/0xff;  
-				g = (g*0x3f)/0xff;  
-				b = (b*0x1f)/0xff;  
-				rgb = (r << 11) | (g << 5) | b;  
-				*((unsigned int*)(fbp + location)) = rgb;  
-			}  
-		}  
-	}  
-
-	sleep(2);  
-
-	seg_len = yres/6;  
-	for (seg_num = 0; seg_num < 6; seg_num++) {  
-		if (seg_num == 5)   
-			tmp_seg_len = yres - seg_len*5;  
-		else   
-			tmp_seg_len = seg_len;  
-
-		for (y = 0; y < tmp_seg_len; y++) {  
-			for (x = 0; x < xres; x++) {  
-				location = seg_num*seg_len*xres*4 + (y*xres+ x)*4;  
-				switch (seg_num) {  
-					case 0://grey  
-						r = 100;  
-						g = 100;  
-						b = 100;   
-						break;  
-					case 1: //black  
-						r = 0x00;  
-						g = 0x00;  
-						b = 0x00;  
-						break;  
-					case 2://white  
-						r = 0xff;  
-						g = 0xff;  
-						b = 0xff;  
-						break;  
-					case 3://red  
-						r = 0xff;  
-						g = 0;  
-						b = 0;  
-						break;  
-					case 4: //green  
-						r =  0;       
-						g = 0xff;  
-						b = 0;  
-						break;  
-					case 5: //blue  
-						r = 0;  
-						g = 0;  
-						b = 0xff;   
-						break;  
-					default:  
-						printf("%s--%d:unknown seg_num %d\n", __FILE__, __LINE__, seg_num);  
-						break;    
-				}  
-
-				r = (r*0x1f)/0xff;  
-				g = (g*0x3f)/0xff;  
-				b = (b*0x1f)/0xff;  
-				rgb = (r << 11) | (g << 5) | b;  
-				*((unsigned int*)(fbp + location)) = rgb;  
-			}  
-		}  
-	}  
-#endif  
-
-#if 1  
-	sleep(2);  
-
-	seg_len = xres/6;  
-	for (seg_num = 0; seg_num < 6; seg_num++) {    
-		if (seg_num == 5)   
-			tmp_seg_len = xres - seg_len*5;  
-		else   
-			tmp_seg_len = seg_len;  
-
-		for (x = 0; x < tmp_seg_len; x++) {  
-			for (y = 0; y < yres; y++) {  
-				location = y*xres*4 + (seg_num*seg_len + x)*4;  
-
-				switch (seg_num) {  
-					case 0:  
-						r = 0xff;  
-						g = (0xff/seg_len)*x;  
-						b = 0;  
-						break;  
-					case 1:  
-						r = (0xff/seg_len)*(seg_len-x);  
-						g = 0xff;  
-						b = 0;  
-						break;  
-					case 2:  
-						r = 0;  
-						g = 0xff;  
-						b = (0xff/seg_len)*x;   
-						break;  
-					case 3:  
-						r = 0;  
-						g = (0xff/seg_len)*(seg_len-x);  
-						b = 0xff;  
-						break;  
-					case 4:  
-						r =  (0xff/seg_len)*x;    
-						g = 0;  
-						b = 0xff;  
-						break;  
-					case 5:  
-						r = 0xff;  
-						g = 0;  
-						b = (0xff/seg_len)*(seg_len-x);   
-						break;  
-					default:  
-						printf("%s--%d:unknown seg_num %d\n", __FILE__, __LINE__, seg_num);  
-						break;  
-				}  
-
-				r = (r*0x1f)/0xff;  
-				g = (g*0x3f)/0xff;  
-				b = (b*0x1f)/0xff;  
-				rgb = (r << 11) | (g << 5) | b;  
-				*((unsigned int*)(fbp + location)) = rgb;  
-			}  
-		}  
-	}  
-
-	sleep(2);  
-
-	seg_len = xres/6;  
-	/* white black gray red green blue */  
-	for (seg_num = 0; seg_num < 6; seg_num++) {  
-		if (seg_num == 5)   
-			tmp_seg_len = xres - seg_len*5;  
-		else   
-			tmp_seg_len = seg_len;  
-
-		for (x = 0; x < tmp_seg_len; x++) {  
-			for (y = 0; y < yres; y++) {  
-				location = y*xres*4 + (seg_num*seg_len + x)*4;  
-
-				switch (seg_num) {  
-					case 0://grey  
-						r = 100;  
-						g = 100;  
-						b = 100;   
-						break;  
-					case 1://black  
-						r = 0;  
-						g = 0;  
-						b = 0;  
-						break;  
-					case 2: //white  
-						r = 0xff;  
-						g = 0xff;  
-						b = 0xff;  
-						break;  
-					case 3://red  
-						r = 0xff;  
-						g = 0;  
-						b = 0;  
-						break;  
-					case 4: //green  
-						r =  0;       
-						g = 0xff;  
-						b = 0;  
-						break;  
-					case 5: //blue  
-						r = 0;  
-						g = 0;  
-						b = 0xff;   
-						break;  
-					default:  
-						printf("%s--%d:unknown seg_num %d\n", __FILE__, __LINE__, seg_num);  
-						break;  
-				}  
-
-				r = (r*0x1f)/0xff;  
-				g = (g*0x3f)/0xff;  
-				b = (b*0x1f)/0xff;  
-				rgb = (r << 11) | (g << 5) | b;  
-				*((unsigned int*)(fbp + location)) = rgb;  
-			}  
-		}  
-	}  
-#endif  
-
-	return 0;
-}
-
+////////////////////////////////////////////////////////////////////////////////
 int full_color(char *fbp, int fbfd, int xres, int yres, int value)
 {
 	int index = 0;
@@ -286,6 +41,8 @@ int full_color_test(char *fbp, int size, int fbfd, int xres, int yres)
 	return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 static void draw_line_h(char *fbp, int x1, int y1, int x2, int y2)
 {
 	int index = 0;
@@ -311,8 +68,7 @@ static void draw_line_v(char *fbp, int x1, int y1, int x2, int y2)
 }
 
 static void draw_line(char *fbp, int x1, int y1, int x2, int y2)
-{
-	x2--; x1--; y1--; y2--;
+{ x2--; x1--; y1--; y2--;
 	if (x1 == x2)
 		draw_line_v(fbp, x1, y1, x2, y2);
 	else if (y1 == y2)
@@ -343,6 +99,44 @@ int rect_test(char *fbp, int size, int fbfd, int xres, int yres)
 
 	return 0;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define T1_XRES 480
+#define T1_YRES 272
+#define T1_HFP 0x05
+#define T1_HBP 0x28
+#define T1_HSW 0x02
+#define T1_VFP 0x08
+#define T1_VBP 0x08
+#define T1_VSW 0x02
+#define T1_PIXCLOCK 111111 // 9MHz
+static void set_var_info(int fd, struct fb_var_screeninfo *var)
+{
+    int ret = 0;
+
+    var->xres = T1_XRES;
+    var->yres = T1_YRES;
+    var->xres_virtual = T1_XRES;
+    var->yres_virtual = T1_YRES;
+
+    var->left_margin = T1_HBP;
+    var->right_margin = T1_HFP;
+    var->hsync_len = T1_HSW;
+
+    var->upper_margin = T1_VFP;
+    var->lower_margin = T1_VBP;
+    var->vsync_len = T1_VSW;
+
+	var->pixclock = T1_PIXCLOCK;
+    var->activate = FB_ACTIVATE_NOW;
+
+    ret = ioctl(fd, FBIOPUT_VSCREENINFO, var);
+    if (ret) {
+        perror("set to t1 failed");
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])  
 {  
