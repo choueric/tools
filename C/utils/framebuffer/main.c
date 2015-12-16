@@ -9,6 +9,44 @@
 
 static int Xres, Yres;
 
+static int rgb2yuv(double r, double g, double b)
+{
+    double y = 0.299 * r + 0.587 * g + 0.114 * b;
+    double u = -0.147 * r - 0.289 * g + 0.436 * b;
+    double v = 0.615 * r - 0.515 * g - 0.100 * b;
+
+    return 0;
+}
+
+/* y 16-235, u,v 16-240 */
+static int yuv2rgb(double y, double u, double v)
+{
+    int ret = 0;
+#if 1
+    double dr = y + 1.14 * v;
+    double dg = y - 0.39 * u - 0.58 * v;
+    double db = y + 2.03 * u;
+#else
+    double dr = y + 1.4075 * (v - 128);  
+    double dg = y - 0.3455 * (u - 128) - 0.7169 * (v - 128);  
+    double db = y + 1.779 * (u - 128); 
+#endif
+
+    int r = (int)dr;
+    int g = (int)dg;
+    int b = (int)db;
+
+    printf("(0x%02x, 0x%02x, 0x%02x) --> (%d(0x%02x), %d(0x%02x), %d(0x%02x))\n",
+            (int)y, (int)u, (int)v, r, r, g, g, b, b);
+
+    ret = b & 0xff;
+    ret |= (g & 0xff) << 8;
+    ret |= (r & 0xff) << 16;
+
+    return ret;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 int full_color(char *fbp, int fbfd, int xres, int yres, int value)
 {
@@ -26,17 +64,23 @@ int full_color(char *fbp, int fbfd, int xres, int yres, int value)
 	return 0;
 }
 
+// RGB888
 int full_color_test(char *fbp, int size, int fbfd, int xres, int yres)
 {
 	printf("size = %d\n", size);
+    // white
 	memset(fbp, 0xff, size);
 	sleep(1);
+    // blue
 	full_color(fbp, fbfd, xres, yres, 0x000000ff);
 	sleep(1);
+    // green
 	full_color(fbp, fbfd, xres, yres, 0x0000ff00);
 	sleep(1);
+    // red
 	full_color(fbp, fbfd, xres, yres, 0x00ff0000);
 	sleep(1);
+
 
 	return 0;
 }
