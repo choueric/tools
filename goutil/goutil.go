@@ -1,6 +1,7 @@
 package goutil
 
 import (
+	//"encoding/binary"
 	"fmt"
 	"os"
 	"strconv"
@@ -14,6 +15,15 @@ func SaveFile(data []byte, filename string) {
 	}
 	defer f.Close()
 	f.WriteString(string(data[:len(data)]))
+}
+
+func SaveFileBin(data []byte, filename string) {
+	f, err1 := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err1 != nil {
+		return
+	}
+	defer f.Close()
+	f.Write(data)
 }
 
 func Str2Time() {
