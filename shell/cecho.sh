@@ -30,7 +30,7 @@ function info {
 }
 
 function good {
-	echo -e "$gree$1\E[0;m"
+	echo -e "$green$1\E[0;m"
 }
 
 function err {
