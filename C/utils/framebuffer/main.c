@@ -111,12 +111,62 @@ static void draw_line_v(char *fbp, int x1, int y1, int x2, int y2)
 	}
 }
 
+// TODO
+static void draw_line_oblique_down(char *fbp, int x1, int y1, int x2, int y2)
+{
+	int i, j;
+	int t = 0;
+
+	for (i = x1, j = y1; i <= x2; i++, j++) {
+		printf("    %d.%d -> %d.%d\n", i, j, i+1, j+1);
+		draw_line_v(fbp, i, j, i, j+1);
+		draw_line_h(fbp, i, j, i+1, j);
+	}
+	printf("-------\n");
+}
+
+static void draw_line_oblique_up(char *fbp, int x1, int y1, int x2, int y2)
+{
+	int i, j;
+	int t = 0;
+
+	for (i = x1, j = y1; i <= x2, j > 0; i++, j--) {
+		printf("    %d.%d -> %d.%d\n", i, j, i+1, j+1);
+		draw_line_v(fbp, i, j, i, j-1);
+		draw_line_h(fbp, i, j, i+1, j);
+	}
+	printf("-------\n");
+}
+
+static void draw_line_oblique(char *fbp, int x1, int y1, int x2, int y2)
+{
+	int i, j;
+
+	printf("draw: %d.%d -> %d.%d\n", x1, y1, x2, y2);
+
+	if (x1 > x2) {
+		i = x1;
+		j = y1;
+		x1 = x2;
+		x2 = i;
+		y1 = y2;
+		y2 = j;
+	}
+	if (y1 > y2) {
+		draw_line_oblique_down(fbp, x1, y1, x2, y2);
+	} else {
+		draw_line_oblique_up(fbp, x1, y1, x2, y2);
+	}
+}
+
 static void draw_line(char *fbp, int x1, int y1, int x2, int y2)
 { x2--; x1--; y1--; y2--;
 	if (x1 == x2)
 		draw_line_v(fbp, x1, y1, x2, y2);
 	else if (y1 == y2)
 		draw_line_h(fbp, x1, y1, x2, y2);
+	else
+		draw_line_oblique(fbp, x1, y1, x2, y2);
 }
 
 static void draw_rect(char *fbp, int x, int y, int w, int h)
@@ -140,6 +190,30 @@ int rect_test(char *fbp, int size, int fbfd, int xres, int yres)
 
 	draw_line(fbp, xres - 200, yres - 1, xres, yres - 1);
 	draw_line(fbp, xres , yres - 200, xres, yres);
+
+	return 0;
+}
+
+int line_test(char *fbp, int size, int fbfd, int xres, int yres)
+{
+	int x0, y0;
+	int x1, y1;
+	int t = 0;
+
+	while (1) {
+		int i, j;
+		for (j = 10; j < (yres - 20); j += 11) {
+			for (i = 10; i < xres; i += 10) {
+				x0 = i;
+				y0 = j;
+				x1 = i;
+				y1 = j + 9;
+				sleep(1);
+				draw_line(fbp, x0, y0, x1, y1);
+			}
+		}
+		memset(fbp, 0x00, size);
+	}
 
 	return 0;
 }
@@ -245,11 +319,16 @@ int main(int argc, char *argv[])
 	printf("--> The framebuffer device was mapped to memory successfully.\n");  
 
 
+#if 1
 	// test 1
 	full_color_test(fbp, screensize, fbfd, vinfo.xres, vinfo.yres);
 
 	// test 2
 	rect_test(fbp, screensize, fbfd, vinfo.xres, vinfo.yres);
+#endif
+
+	line_test(fbp, screensize, fbfd, vinfo.xres, vinfo.yres);
+	
 
 	sleep(50);
 
