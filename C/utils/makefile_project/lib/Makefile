@@ -1,16 +1,21 @@
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:%.c=%.o)
+DEPS=$(SRCS:%.c=%.d)
 
 TARGET=liblib.a
 
-all:dep $(TARGET)
+all:$(TARGET)
 
-dep: $(SRCS)
-	$(CC) $(CFLAGS) -MM $(SRCS) > dep.mk
--include dep.mk
+$(DEPS):%.d:%.c 
+	@set -e rm -f $@
+	$(CC) -MM $(CFLAGS) $< > $@.1234
+	@sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.1234 > $@
+	@rm -f $@.1234
+
+-include $(DEPS)
 
 $(TARGET):$(OBJS)
 	ar -r $@ $(OBJS)
 
 clean:
-	rm -rf dep.mk *.o $(TARGET)
+	rm -rf *.d *.o $(TARGET)
