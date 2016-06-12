@@ -5,7 +5,7 @@ CODEGEN_PREFIX=arm-hisiv400-linux-
 OUTPUT_DIR=`pwd`/../build
 TFTP_HOME=/home/zhs/workspace/tftphome
 MOD_PATH=${OUTPUT_DIR}/mod
-BOARD_DEFCONF=hi3516a_magewell_defconfig
+BOARD_DEFCONF=gamebox_defconfig
 THREAD_NUM=5
 ##########################################################################
 
@@ -29,6 +29,12 @@ function err {
 }
 ########################################
 
+function save_config() {
+	TARGET=savedefconfig
+    kernel_build_target ${TARGET}
+	cp -v ${OUTPUT_DIR}/defconfig `pwd`/arch/arm/configs/${BOARD_DEFCONF}
+}
+
 function kernel_build_target() {
     make -j${THREAD_NUM} O=${OUTPUT_DIR} CROSS_COMPILE=${CODEGEN_PREFIX} ARCH=arm ${1}\
         INSTALL_MOD_PATH=${MOD_PATH}
@@ -48,8 +54,8 @@ function build_mod {
 function check_version {
     kver=$(kernel_build_target "kernelversion")
     krel=$(kernel_build_target "kernelrelease")
-    echo "kernel version = ${kver}"
-    echo "kernel release = ${krel}"
+    good "kernel version = ${kver}"
+    good "kernel release = ${krel}"
 }
 
 function print_usage {
@@ -80,7 +86,7 @@ if [[ $1 == "defconfig" ]]; then
 	TARGET=${BOARD_DEFCONF}
     kernel_build_target ${TARGET}
 elif [[ $1 == "saveconfig" ]]; then
-	cp -v ${OUTPUT_DIR}/.config `pwd`/arch/arm/configs/${BOARD_DEFCONF}
+	save_config
 elif [[ $1 == "config" ]]; then
 	TARGET=menuconfig
     kernel_build_target ${TARGET}
@@ -102,7 +108,7 @@ elif [[ $1 == "version" ]]; then
 elif [[ $1 == "help" ]]; then
 	print_usage
 else
-	echo "invalid target"
+	err "invalid target"
 	print_usage
 	exit 1
 fi
