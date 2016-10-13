@@ -101,6 +101,9 @@ elif [[ $1 == "clean" ]]; then
 elif [[ $1 == "distclean" ]]; then
 	TARGET=distclean
     kernel_build_target ${TARGET}
+elif [[ $1 == "tar" ]]; then
+	TARGET=tarbz2-pkg
+	kernel_build_target ${TARGET}
 elif [[ $1 == "install" ]]; then
 	cp -v ${OUTPUT_DIR}/arch/arm/boot/uImage ${TFTP_HOME}/uImage
 elif [[ $1 == "version" ]]; then
