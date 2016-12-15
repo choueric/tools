@@ -1,6 +1,7 @@
 #include "statistic.h"
 
 #include <stdio.h>
+#include <string.h>
 
 /* return interval between @cur and @last, unit is us */
 inline static int get_interval(struct timeval *cur, struct timeval *last)
@@ -10,7 +11,7 @@ inline static int get_interval(struct timeval *cur, struct timeval *last)
 
 void init_statistic(struct statistic *p, char *name, int interval)
 {
-  p->name = name;
+  strncpy(p->name, name, NAME_LEN);
   p->count = 0;
   gettimeofday(&p->last, NULL);
   p->interval = interval; // us
