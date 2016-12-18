@@ -3,8 +3,10 @@
 #include <time.h>
 #include <sys/time.h>
 
+#define NAME_LEN 32
+
 struct statistic {
-  char *name;
+  char name[NAME_LEN];
   struct timeval last;
   struct timeval now;
   unsigned int count;
