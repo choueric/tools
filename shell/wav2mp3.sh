@@ -3,7 +3,7 @@
 # install libav-tools for avconv
 
 set -e
-set -x
+#set -x
 
 if [[ $# < 1 ]];then
 	echo "please input music filename"
