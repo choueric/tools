@@ -155,23 +155,19 @@ if [ "x$THISUSER" != "xroot" ]; then
     exit 1
 fi
 
-if [ $1 = "down" ]; then
-	do_down
-elif [ $1 = "config" ]; then
-	do_config
-elif [ $1 = "bash" ]; then
-	do_bash
-elif [ $1 = "pull" ]; then
-	backup_archives "pull"
-elif [ $1 = "push" ]; then
-	backup_archives "push"
-elif [ $1 = "build" ]; then
-	setup_archives
-	do_down
-	do_config
-else
+case "$1"
+	"down") do_down;;
+	"config") do_config;;
+	"bash") do_bash;;
+	"pull") backup_archives "pull";;
+	"push") backup_archives "push";;
+	"build")
+		setup_archives
+		do_down
+		do_config;;
+	*)
 	print_usage
 	exit 1
-fi
+esac
 
 exit 0
