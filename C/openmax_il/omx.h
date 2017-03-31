@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+//#define DEBUG_VERBOSE
+
 #define BUFFER_NUM 20
 
 #define fatal(fmt, args...) {\
@@ -18,11 +20,10 @@
   (st)->nVersion.s.nRevision = OMX_VERSION_REVISION; \
   (st)->nVersion.s.nStep = OMX_VERSION_STEP; \
 }
-const char *omx_state2str(OMX_STATETYPE state);
-const char *omx_err2str(OMX_ERRORTYPE err);
-const char *omx_cmd2str(OMX_COMMANDTYPE cmd);
+const char *omx_state_to_string(OMX_STATETYPE state);
+const char *omx_error_to_string(OMX_ERRORTYPE err);
+const char *omx_command_to_string (OMX_COMMANDTYPE cmd);
 
-// TODO: add lock for event
 struct Comp {
   OMX_STRING name;
   OMX_HANDLETYPE handle;
@@ -31,15 +32,13 @@ struct Comp {
   OMX_U32 out_port_index;
   OMX_PARAM_PORTDEFINITIONTYPE out_port_def;
   OMX_CALLBACKTYPE cbs;
+  OMX_STATETYPE state;
   OMX_BUFFERHEADERTYPE *in_port_bufs[BUFFER_NUM];
   OMX_U32 in_bufs_num;
   OMX_BUFFERHEADERTYPE *out_port_bufs[BUFFER_NUM];
   OMX_U32 out_bufs_num;
 
   OMX_U32 fps;
-  OMX_U32 width;
-  OMX_U32 height;
-  OMX_COLOR_FORMATTYPE inFormat;
 };
 
 OMX_ERRORTYPE GetParameter(OMX_HANDLETYPE handle, OMX_INDEXTYPE index, OMX_PTR param);
