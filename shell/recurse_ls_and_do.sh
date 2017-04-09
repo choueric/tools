@@ -6,12 +6,14 @@ set -e
 CMD_UNZIP="unzip"
 CMD_CONVERT="convert"
 CMD_RESUFFIX="resuffix"
+CMD_CONVERT_PIC="conpic"
 
 printUsage() {
 	echo "Usage: $0 <command>\nAvailable commands are:"
 	echo "  - $CMD_UNZIP\t: loop unzip files in current directory."
 	echo "  - $CMD_CONVERT\t: <format>, convert files with suffix <format> into mp3."
 	echo "  - $CMD_RESUFFIX\t: <old> <new>, rename suffix from <old> to <new>."
+	echo "  - $CMD_CONVERT_PIC\t: <old> <new>, convert picture from <old> to <new>."
 	exit 1
 }
 
@@ -25,6 +27,20 @@ convertAudio() {
 	do
 		b=`basename -s .${SUFFIX} "$f"`
 		avconv -i "$f" -b:a 320k "$b".mp3
+	done
+}
+
+convertPic() {
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		echo "$CMD_CONVERT_PIC need suffix <old> and <new>"
+		exit 1
+	fi
+	SUFFIX=$1
+	NEWSUFFIX=$2
+	for f in *.${SUFFIX}
+	do
+		b=`basename -s .${SUFFIX} "$f"`
+		convert "$f" "$b".$NEWSUFFIX
 	done
 }
 
@@ -59,5 +75,6 @@ case "$1" in
 	$CMD_UNZIP) unzipFiles;;
 	$CMD_CONVERT) convertAudio $2;;
 	$CMD_RESUFFIX) resuffix $2 $3;;
+	$CMD_CONVERT_PIC) convertPic $2 $3;;
 	*) printUsage;;
 esac
