@@ -24,7 +24,7 @@ convertAudio() {
 	for f in *.${SUFFIX}
 	do
 		b=`basename -s .${SUFFIX} "$f"`
-		avconv -i "$f" -b 320k "$b".mp3
+		avconv -i "$f" -b:a 320k "$b".mp3
 	done
 }
 
