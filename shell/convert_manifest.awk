@@ -5,13 +5,8 @@
 
 {
 	if ($1 ~ "<project") {
-		for (i = 1; i <= NF; i++) {
-			gsub(/\//,"_", $3)
-			gsub(/\./,"-", $3)
-			printf " %s", $i
-		}
-		printf "\n"
-	} else {
-		print $0
+		gsub(/\//,"_", $3)
+		gsub(/\./,"-", $3)
 	}
+	print $0
 }
