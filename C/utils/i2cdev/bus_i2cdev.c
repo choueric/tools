@@ -8,8 +8,10 @@
 #include "bus_i2cdev.h"
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
-static int i2cdev_transfer(int fd, uint8 *buf, size_t count, uint16 addr, int is_read)
+static int i2cdev_transfer(int fd, uint8_t *buf, size_t count, uint16_t addr, int is_read)
 {
 	struct i2c_rdwr_ioctl_data msg_rdwr;
 	struct i2c_msg msgs;
@@ -51,18 +53,18 @@ int i2cdev_close(int fd)
 	return close(fd);
 }
 
-int i2cdev_read(int fd, uint8 *buf, size_t count, uint16 addr)
+int i2cdev_read(int fd, uint8_t *buf, size_t count, uint16_t addr)
 {
 	return i2cdev_transfer(fd, buf, count, addr, 1);
 }
 
-int i2cdev_write(int fd, uint8 *buf, size_t count, uint16 addr)
+int i2cdev_write(int fd, uint8_t *buf, size_t count, uint16_t addr)
 {
 	return i2cdev_transfer(fd, buf, count, addr, 0);
 }
 
 
-int i2cdev_write_then_read(int fd, uint8 *wbuf, int wlen, uint16 waddr, uint8 *rbuf, int rlen, uint16 raddr)
+int i2cdev_write_then_read(int fd, uint8_t *wbuf, int wlen, uint16_t waddr, uint8_t *rbuf, int rlen, uint16_t raddr)
 {
 	struct i2c_rdwr_ioctl_data msg_rdwr;
 	struct i2c_msg msgs[2];
@@ -89,7 +91,7 @@ int i2cdev_write_then_read(int fd, uint8 *wbuf, int wlen, uint16 waddr, uint8 *r
 	return (ret == 2) ? 0: -1;
 }
 
-int i2cdev_write_twice(int fd, uint8 *buf1, int len1, uint16 addr1, uint8 *buf2, int len2, uint16 addr2)
+int i2cdev_write_twice(int fd, uint8_t *buf1, int len1, uint16_t addr1, uint8_t *buf2, int len2, uint16_t addr2)
 {
 	struct i2c_rdwr_ioctl_data msg_rdwr;
 	struct i2c_msg msgs[2];
@@ -116,7 +118,7 @@ int i2cdev_write_twice(int fd, uint8 *buf1, int len1, uint16 addr1, uint8 *buf2,
 	return (ret == 2) ? 0: -1;
 }
 
-int i2cdev_ioctl(int fd, uint32 cmd, void *arg)
+int i2cdev_ioctl(int fd, uint32_t cmd, void *arg)
 {
 	return ioctl(fd, cmd, arg);
 }
