@@ -21,43 +21,133 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
+// Normally this offset is 1900. It minuses 100 because set_time and get_time 
+// in the driver of rx-8010 minus and add 100.
+#define YEAR_OFFSET (1900 - 100)
 
-/*
- * This expects the new RTC class driver framework, working with
- * clocks that will often not be clones of what the PC-AT had.
- * Use the command line to specify another RTC if you need one.
- */
-static const char default_rtc[] = "/dev/rtc0";
+#include "args.c"
 
+void real_time_2_tm(int year, int mon, int mday, int hour, int min, int sec,
+		struct rtc_time *tm)
+{
+	tm->tm_year = year - YEAR_OFFSET;
+	tm->tm_mon = mon;
+	tm->tm_mday = mday;
+	tm->tm_hour = hour;
+	tm->tm_min = min;
+	tm->tm_sec = sec;
+}
+
+void print_tm(struct rtc_time *tm)
+{
+	int year = tm->tm_year + YEAR_OFFSET;
+	printf("\t%d-%d-%d %d:%d:%d\n", year, tm->tm_mon, tm->tm_mday,
+			tm->tm_hour, tm->tm_min, tm->tm_sec);
+}
+
+static int test_set_time(int fd)
+{
+	int ret;
+	struct rtc_time time;
+	printf("==== set time ====\n");
+
+	real_time_2_tm(1987, 2, 27, 12, 30, 15, &time);
+	ret = ioctl(fd, RTC_SET_TIME, &time);
+	if (ret) {
+		printf("set time failed: %s\n", strerror(errno));
+		return ret;
+	}
+	printf("\tset time OK.\n");
+	return 0;
+}
+
+static int test_read_time(int fd)
+{
+	int ret;
+	struct rtc_time time;
+	printf("==== read time ====\n");
+
+	ret = ioctl(fd, RTC_RD_TIME, &time);
+	if (ret) {
+		printf("get time failed: %s\n", strerror(errno));
+		return ret;
+	}
+	printf("\tget time OK.\n");
+	print_tm(&time);
+	return 0;
+}
+
+static int test_low_voltage(int fd)
+{
+	int ret;
+	int state;
+
+	printf("==== voltage low operatoin ====\n");
+
+	ret = ioctl(fd, RTC_VL_READ, &state);
+	if (ret) {
+		printf("read voltage low failed: %s\n", strerror(errno));
+		return ret;
+	}
+	printf("\tvoltage low: %s\n", state ? "Low": "Normal");
+
+	if (state) {
+		printf("\tclear voltage low flag\n");
+		ret = ioctl(fd, RTC_VL_CLR, NULL);
+		if (ret) {
+			printf("clear voltage low failed: %s\n", strerror(errno));
+			return ret;
+		}
+		printf("\tOK.\n");
+	}
+
+	return 0;
+}
+
+static int auto_test(int fd)
+{
+	fprintf(stderr, "\nRTC Driver Auto Test.\n\n");
+
+	test_set_time(fd);
+	test_low_voltage(fd);
+	test_read_time(fd);
+
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
 	int i, fd, retval, irqcount = 0;
 	unsigned long tmp, data;
 	struct rtc_time rtc_tm;
-	const char *rtc = default_rtc;
 
-	switch (argc) {
-	case 2:
-		rtc = argv[1];
-		/* FALLTHROUGH */
-	case 1:
-		break;
-	default:
-		fprintf(stderr, "usage:  rtctest [rtcdev]\n");
-		return 1;
-	}
+	parse_args(argc, argv);
+	print_options();
 
-	fd = open(rtc, O_RDONLY);
+	fd = open(rtcdev, O_RDONLY);
 
-	if (fd ==  -1) {
-		perror(rtc);
+	if (fd == -1) {
+		perror(rtcdev);
 		exit(errno);
 	}
 
-	fprintf(stderr, "\n\t\t\tRTC Driver Test Example.\n\n");
-	goto test_READ;
+	if (autotest) {
+		auto_test(fd);
+		goto done;
+	}
+
+	if (!strcmp(cmd, "read")) {
+		test_read_time(fd);
+	} else if (!strcmp(cmd, "set")) {
+		test_set_time(fd);
+	} else if (!strcmp(cmd, "vl")) {
+		test_low_voltage(fd);
+	} else {
+		printf("invalid command %s\n", cmd);
+	}
+	goto done;
 
 	/* Turn on update interrupts (one per second) */
 	retval = ioctl(fd, RTC_UIE_ON, 0);
@@ -71,8 +161,7 @@ int main(int argc, char **argv)
 		exit(errno);
 	}
 
-	fprintf(stderr, "Counting 5 update (1/sec) interrupts from reading %s:",
-			rtc);
+	fprintf(stderr, "Counting 5 update (1/sec) interrupts from reading %s:", rtcdev);
 	fflush(stderr);
 	for (i=1; i<6; i++) {
 		/* This read will block */
@@ -120,7 +209,7 @@ int main(int argc, char **argv)
 
 test_READ:
 	/* Read the RTC time/date */
-	retval = syscall(SYS_ioctl, -1, RTC_RD_TIME, &rtc_tm);
+	retval = syscall(SYS_ioctl, fd, RTC_RD_TIME, &rtc_tm);
 	if (retval < 0) {
 		printf("ret = %d\n", retval);
 		perror("RTC_RD_TIME ioctl");
@@ -253,7 +342,7 @@ test_PIE:
 	}
 
 done:
-	fprintf(stderr, "\n\n\t\t\t *** Test complete ***\n");
+	fprintf(stderr, "\n*** Test complete ***\n");
 
 	close(fd);
 

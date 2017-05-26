@@ -1,11 +1,14 @@
-CC = /home/zhs/workspace/ti8107/toolchain/cgt_a8/arago/linux-devkit/bin/arm-arago-linux-gnueabi-gcc
+CC = gcc
 FLAGS = -Wall -g -Werror
 
-SRC = main.c
+SRC = main.c args.c
 EXEC = rtc-test
 
 $(EXEC):$(SRC)
-	$(CC) $(FLAGS) $(SRC) -o $(EXEC)
+	$(CC) $(FLAGS) main.c -o $(EXEC)
 
 clean:
 	rm -f $(EXEC) *.o core
+
+install:
+	scp $(SRC) Makefile ubuntu@test:~/rtc/
