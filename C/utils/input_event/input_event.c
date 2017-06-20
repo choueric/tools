@@ -291,14 +291,15 @@ static void parse_event(char *str, unsigned short type, unsigned short code)
 
 int main()
 {
+	char *dev = "/dev/input/event0";
 	int fd, n;
 	struct input_event ev;
 	int count = 0;
 	char str[50];
 
-	fd = open("/dev/input/event0", O_RDONLY);
+	fd = open(dev, O_RDONLY);
 	if (fd < 0) {
-		printf("open failed: %m\n");
+		printf("open %s failed: %m\n", dev);
 		return -1;
 	}
 

@@ -1,5 +1,5 @@
-#CC = gcc
-CC = arm-hisiv400-linux-gcc
+CC = gcc
+#CC = arm-hisiv400-linux-gcc
 FLAGS = -Wall -g -Werror
 
 SRC = input_event.c
