@@ -13,6 +13,11 @@
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
+#include <pthread.h>
+
+#include "options.c"
+
+#define SLEEP_TIME 1  // second
 
 static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int nStop)
 {
@@ -90,8 +95,8 @@ static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int 
     else if (nStop == 2)
         newtio.c_cflag |= CSTOPB;
 
-    newtio.c_cc[VTIME] = 5;
-    newtio.c_cc[VMIN] = 0;
+    newtio.c_cc[VTIME] = 0;
+    newtio.c_cc[VMIN] = 1;
     tcflush (fd,TCIFLUSH);
     if ((tcsetattr(fd, TCSANOW, &newtio)) != 0) {
     	printf("com set error.\n");
@@ -120,52 +125,119 @@ static int clr_flag(int fd, int flags)
     return (val>=0)?1:0;
 }
 
-unsigned int open_uart(const char *ttyS, unsigned int baud)
+unsigned int open_uart(const char *dev)
 {
 	unsigned int fd;
-	fd = open(ttyS, O_RDWR);
-	if(!fd)
-		printf("%s  open Failed!\n", ttyS);
+
+	fd = open(dev, O_RDWR | O_NOCTTY);
+	if (fd < 0)
+		printf("%s  open Failed!\n", dev);
 	else
-		printf("%s open Success! set baudrate:%d\n", ttyS,baud);
-	if(config_uart(fd, baud, 8, 'E', 1) < 0)
-		printf("%s set failed!\n", ttyS);
+		printf("%s open Success!\n", dev);
+
 	return fd;
 }
 
+static int test_write(int fd, char *buf, int size)
+{
+	int ret = 0;
+
+	while (1) {
+		printf("--> write %s\n", buf);
+		ret = write(fd, buf, size);
+		if (ret < 0 || ret != size) {
+			printf("write error: %d\n", ret);
+			break;
+		}
+		sleep(SLEEP_TIME);
+	}
+
+	return ret;
+}
+
+
+static void *read_thread(void *data)
+{
+	int ret = 0;
+	char *recv = NULL;
+	int size = 128;
+	int fd = (int)data;
+
+	recv = malloc(size * sizeof(char));
+	if (recv == NULL) {
+		printf("mallc failed\n");
+		return NULL;
+	}
+
+	while (1) {
+		ret = read(fd, recv, size);
+		if (ret < 0) {
+			printf("read error: %d (%s)\n", ret, strerror(errno));
+			break;
+		}
+		if (ret == 0) {
+			printf("no read %d\n", ret);
+		} else {
+			printf("--> recv: %s", recv);
+		}
+		sleep(SLEEP_TIME);
+	}
+
+	return NULL;
+}
+
+static int test_loop(int fd, char *buf, int size)
+{
+	int ret = 0;
+	pthread_t pid;
+
+	pthread_create(&pid, NULL, read_thread, fd);
+
+	while (1) {
+		printf("--> write %s\n", buf);
+		ret = write(fd, buf, size);
+		if (ret < 0 || ret != size) {
+			printf("write error: %d\n", ret);
+			break;
+		}
+
+		sleep(SLEEP_TIME);
+	}
+
+	return ret;
+}
 
 int main(int argc, char **argv)
 {
 	unsigned int fd;
-	char *dev = "/dev/ttyS0";
 	int bdrate = 115200;
 	char send_buf[] = "test\n";
 	int ret;
 
-	if (argc >= 2) {
-		dev = argv[1];
-	}
+	parse_args(argc, argv);
+	print_options();
 
-	printf("===== %s =======\n", dev);
 	printf("bdrate: %d\n",  bdrate);
 
-	fd = open_uart(dev, bdrate);
+	fd = open_uart(device);
 	if (fd < 0) {
 		printf("open uart error: %d\n", fd);
 		return -1;
 	}
 
-	while (1) {
-		ret = write(fd, send_buf, sizeof(send_buf));
-		if (ret < 0) {
-			printf("write error: %d\n", ret);
-			break;
-		}
-		usleep(1000*800);
+	if (config_uart(fd, bdrate, 8, 'E', 1) < 0) {
+		printf("config uart failed!\n");
+		return -1;
+	}
+
+	if (loop) {
+		ret = test_loop(fd, send_buf, sizeof(send_buf));
+	} else {
+		ret = test_write(fd, send_buf, sizeof(send_buf));
 	}
 
 	close(fd);
 	printf("\n test success\n");
 
-	return 0;
+	return ret;
 }
