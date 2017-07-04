@@ -23,9 +23,7 @@
 #include <errno.h>
 #include <string.h>
 
-// Normally this offset is 1900. It minuses 100 because set_time and get_time 
-// in the driver of rx-8010 minus and add 100.
-#define YEAR_OFFSET (1900 - 100)
+#define YEAR_OFFSET (1900)
 
 #include "args.c"
 
@@ -53,7 +51,7 @@ static int test_set_time(int fd)
 	struct rtc_time time;
 	printf("==== set time ====\n");
 
-	real_time_2_tm(1987, 2, 27, 12, 30, 15, &time);
+	real_time_2_tm(2017, 2, 27, 12, 30, 15, &time);
 	ret = ioctl(fd, RTC_SET_TIME, &time);
 	if (ret) {
 		printf("set time failed: %s\n", strerror(errno));
@@ -117,6 +115,70 @@ static int auto_test(int fd)
 	return 0;
 }
 
+// Test time update function
+static int test_update(int fd)
+{
+	int ret, i; 
+	unsigned long data;
+
+	printf("==== update test =====\n");
+
+	/* Turn on update interrupts (one per second) */
+	ret = ioctl(fd, RTC_UIE_ON, 0);
+	if (ret < 0) {
+		perror("RTC_UIE_ON ioctl");
+		exit(errno);
+	}
+
+	fprintf(stderr, "Counting 5 update (1/sec) interrupts from reading %s:", rtcdev);
+	fflush(stderr);
+
+	for (i = 1; i < 6; i++) {
+		/* This read will block */
+		ret = read(fd, &data, sizeof(unsigned long));
+		if (ret == -1) {
+			perror("read");
+			exit(errno);
+		}
+		fprintf(stderr, " %d", i);
+		fflush(stderr);
+	}
+
+	fprintf(stderr, "\nAgain, from using select(2) on /dev/rtc:");
+	fflush(stderr);
+
+	for (i = 1; i < 6; i++) {
+		struct timeval tv = {5, 0};     /* 5 second timeout on select */
+		fd_set readfds;
+
+		FD_ZERO(&readfds);
+		FD_SET(fd, &readfds);
+		/* The select will wait until an RTC interrupt happens. */
+		ret = select(fd+1, &readfds, NULL, NULL, &tv);
+		if (ret == -1) {
+			perror("select");
+			exit(errno);
+		}
+		/* This read won't block unlike the select-less case above. */
+		ret = read(fd, &data, sizeof(unsigned long));
+		if (ret == -1) {
+			perror("read");
+			exit(errno);
+		}
+		fprintf(stderr, " %d",i);
+		fflush(stderr);
+	}
+
+	/* Turn off update interrupts */
+	ret = ioctl(fd, RTC_UIE_OFF, 0);
+	if (ret == -1) {
+		perror("RTC_UIE_OFF ioctl");
+		exit(errno);
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int i, fd, retval, irqcount = 0;
@@ -140,85 +202,17 @@ int main(int argc, char **argv)
 
 	if (!strcmp(cmd, "read")) {
 		test_read_time(fd);
-	} else if (!strcmp(cmd, "set")) {
+	} else if (!strcmp(cmd, "write")) {
 		test_set_time(fd);
 	} else if (!strcmp(cmd, "vl")) {
 		test_low_voltage(fd);
+	} else if (!strcmp(cmd, "update")) {
+		test_update(fd);
 	} else {
 		printf("invalid command %s\n", cmd);
 	}
 	goto done;
 
-	/* Turn on update interrupts (one per second) */
-	retval = ioctl(fd, RTC_UIE_ON, 0);
-	if (retval == -1) {
-		if (errno == ENOTTY) {
-			fprintf(stderr,
-				"\n...Update IRQs not supported.\n");
-			goto test_READ;
-		}
-		perror("RTC_UIE_ON ioctl");
-		exit(errno);
-	}
-
-	fprintf(stderr, "Counting 5 update (1/sec) interrupts from reading %s:", rtcdev);
-	fflush(stderr);
-	for (i=1; i<6; i++) {
-		/* This read will block */
-		retval = read(fd, &data, sizeof(unsigned long));
-		if (retval == -1) {
-			perror("read");
-			exit(errno);
-		}
-		fprintf(stderr, " %d",i);
-		fflush(stderr);
-		irqcount++;
-	}
-
-	fprintf(stderr, "\nAgain, from using select(2) on /dev/rtc:");
-	fflush(stderr);
-	for (i=1; i<6; i++) {
-		struct timeval tv = {5, 0};     /* 5 second timeout on select */
-		fd_set readfds;
-
-		FD_ZERO(&readfds);
-		FD_SET(fd, &readfds);
-		/* The select will wait until an RTC interrupt happens. */
-		retval = select(fd+1, &readfds, NULL, NULL, &tv);
-		if (retval == -1) {
-		        perror("select");
-		        exit(errno);
-		}
-		/* This read won't block unlike the select-less case above. */
-		retval = read(fd, &data, sizeof(unsigned long));
-		if (retval == -1) {
-		        perror("read");
-		        exit(errno);
-		}
-		fprintf(stderr, " %d",i);
-		fflush(stderr);
-		irqcount++;
-	}
-
-	/* Turn off update interrupts */
-	retval = ioctl(fd, RTC_UIE_OFF, 0);
-	if (retval == -1) {
-		perror("RTC_UIE_OFF ioctl");
-		exit(errno);
-	}
-
-test_READ:
-	/* Read the RTC time/date */
-	retval = syscall(SYS_ioctl, fd, RTC_RD_TIME, &rtc_tm);
-	if (retval < 0) {
-		printf("ret = %d\n", retval);
-		perror("RTC_RD_TIME ioctl");
-		exit(errno);
-	}
-
-	fprintf(stderr, "\n\nCurrent RTC date/time is %d-%d-%d, %02d:%02d:%02d.\n",
-		rtc_tm.tm_mday, rtc_tm.tm_mon + 1, rtc_tm.tm_year + 1900,
-		rtc_tm.tm_hour, rtc_tm.tm_min, rtc_tm.tm_sec);
 
 	/* Set the alarm to 5 sec in the future, and check for rollover */
 	rtc_tm.tm_sec += 5;

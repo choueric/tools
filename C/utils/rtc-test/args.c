@@ -6,6 +6,7 @@ static char *commands[] = {
 	"read",
 	"write",
 	"vl",
+	"update",
 	NULL,
 };
 
