@@ -61,13 +61,18 @@ static int test_set_time(int fd)
 	return 0;
 }
 
+static int do_read_time(int fd, struct rtc_time *tm)
+{
+	return ioctl(fd, RTC_RD_TIME, tm);
+}
+
 static int test_read_time(int fd)
 {
 	int ret;
 	struct rtc_time time;
 	printf("==== read time ====\n");
 
-	ret = ioctl(fd, RTC_RD_TIME, &time);
+	ret = do_read_time(fd, &time);
 	if (ret) {
 		printf("get time failed: %s\n", strerror(errno));
 		return ret;
@@ -179,11 +184,84 @@ static int test_update(int fd)
 	return 0;
 }
 
+static int test_alarm(int fd)
+{
+	struct rtc_time rtc_tm;
+	int ret = 0;
+	unsigned long data;
+
+	ret = do_read_time(fd, &rtc_tm);
+	if (ret) {
+		printf("get time failed: %s\n", strerror(errno));
+		return ret;
+	}
+	printf("Now time is: \n");
+	print_tm(&rtc_tm);
+
+	/* Set the alarm to 5 sec in the future, and check for rollover */
+	rtc_tm.tm_sec += 5;
+	if (rtc_tm.tm_sec >= 60) {
+		rtc_tm.tm_sec %= 60;
+		rtc_tm.tm_min++;
+	}
+	if (rtc_tm.tm_min == 60) {
+		rtc_tm.tm_min = 0;
+		rtc_tm.tm_hour++;
+	}
+	if (rtc_tm.tm_hour == 24)
+		rtc_tm.tm_hour = 0;
+
+	ret = ioctl(fd, RTC_ALM_SET, &rtc_tm);
+	if (ret == -1) {
+		if (errno == ENOTTY) {
+			fprintf(stderr, "\n...Alarm IRQs not supported.\n");
+			return 0;
+		}
+		perror("RTC_ALM_SET ioctl");
+		exit(errno);
+	}
+
+	/* Read the current alarm settings */
+	ret = ioctl(fd, RTC_ALM_READ, &rtc_tm);
+	if (ret == -1) {
+		perror("RTC_ALM_READ ioctl");
+		exit(errno);
+	}
+
+	fprintf(stderr, "Alarm time now set to %02d:%02d:%02d.\n",
+		rtc_tm.tm_hour, rtc_tm.tm_min, rtc_tm.tm_sec);
+
+	/* Enable alarm interrupts */
+	ret = ioctl(fd, RTC_AIE_ON, 0);
+	if (ret == -1) {
+		perror("RTC_AIE_ON ioctl");
+		exit(errno);
+	}
+
+	fprintf(stderr, "Waiting 5 seconds for alarm...");
+	fflush(stderr);
+	/* This blocks until the alarm ring causes an interrupt */
+	ret = read(fd, &data, sizeof(unsigned long));
+	if (ret == -1) {
+		perror("read");
+		exit(errno);
+	}
+	fprintf(stderr, " okay. Alarm rang.\n");
+
+	/* Disable alarm interrupts */
+	ret = ioctl(fd, RTC_AIE_OFF, 0);
+	if (ret == -1) {
+		perror("RTC_AIE_OFF ioctl");
+		exit(errno);
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int i, fd, retval, irqcount = 0;
 	unsigned long tmp, data;
-	struct rtc_time rtc_tm;
 
 	parse_args(argc, argv);
 	print_options();
@@ -208,72 +286,13 @@ int main(int argc, char **argv)
 		test_low_voltage(fd);
 	} else if (!strcmp(cmd, "update")) {
 		test_update(fd);
+	} else if (!strcmp(cmd, "alarm")) {
+		test_alarm(fd);
 	} else {
 		printf("invalid command %s\n", cmd);
 	}
 	goto done;
 
-
-	/* Set the alarm to 5 sec in the future, and check for rollover */
-	rtc_tm.tm_sec += 5;
-	if (rtc_tm.tm_sec >= 60) {
-		rtc_tm.tm_sec %= 60;
-		rtc_tm.tm_min++;
-	}
-	if (rtc_tm.tm_min == 60) {
-		rtc_tm.tm_min = 0;
-		rtc_tm.tm_hour++;
-	}
-	if (rtc_tm.tm_hour == 24)
-		rtc_tm.tm_hour = 0;
-
-	retval = ioctl(fd, RTC_ALM_SET, &rtc_tm);
-	if (retval == -1) {
-		if (errno == ENOTTY) {
-			fprintf(stderr,
-				"\n...Alarm IRQs not supported.\n");
-			goto test_PIE;
-		}
-		perror("RTC_ALM_SET ioctl");
-		exit(errno);
-	}
-
-	/* Read the current alarm settings */
-	retval = ioctl(fd, RTC_ALM_READ, &rtc_tm);
-	if (retval == -1) {
-		perror("RTC_ALM_READ ioctl");
-		exit(errno);
-	}
-
-	fprintf(stderr, "Alarm time now set to %02d:%02d:%02d.\n",
-		rtc_tm.tm_hour, rtc_tm.tm_min, rtc_tm.tm_sec);
-
-	/* Enable alarm interrupts */
-	retval = ioctl(fd, RTC_AIE_ON, 0);
-	if (retval == -1) {
-		perror("RTC_AIE_ON ioctl");
-		exit(errno);
-	}
-
-	fprintf(stderr, "Waiting 5 seconds for alarm...");
-	fflush(stderr);
-	/* This blocks until the alarm ring causes an interrupt */
-	retval = read(fd, &data, sizeof(unsigned long));
-	if (retval == -1) {
-		perror("read");
-		exit(errno);
-	}
-	irqcount++;
-	fprintf(stderr, " okay. Alarm rang.\n");
-
-	/* Disable alarm interrupts */
-	retval = ioctl(fd, RTC_AIE_OFF, 0);
-	if (retval == -1) {
-		perror("RTC_AIE_OFF ioctl");
-		exit(errno);
-	}
-
-test_PIE:
 	/* Read periodic IRQ rate */
 	retval = ioctl(fd, RTC_IRQP_READ, &tmp);
 	if (retval == -1) {
