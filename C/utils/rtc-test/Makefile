@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS = -Wall -g -Werror
+FLAGS = -Wall -g -Werror -std=c11
 
 SRC = main.c args.c
 EXEC = rtc-test

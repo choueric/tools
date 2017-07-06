@@ -8,6 +8,7 @@ static char *commands[] = {
 	"vl",
 	"update",
 	"alarm",
+	"periodic",
 	NULL,
 };
 

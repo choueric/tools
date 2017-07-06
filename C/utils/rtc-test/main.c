@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <getopt.h>
 
 #define YEAR_OFFSET (1900)
 
@@ -258,10 +259,76 @@ static int test_alarm(int fd)
 	return 0;
 }
 
+static int test_periodic(int fd)
+{
+	int ret;
+	unsigned long rate;
+	unsigned long data;
+
+	/* Read periodic IRQ rate */
+	ret = ioctl(fd, RTC_IRQP_READ, &rate);
+	if (ret == -1) {
+		/* not all RTCs support periodic IRQs */
+		if (errno == ENOTTY) {
+			fprintf(stderr, "\nNo periodic IRQ support\n");
+			return ret;
+		}
+		perror("RTC_IRQP_READ ioctl");
+		exit(errno);
+	}
+	fprintf(stderr, "\nPeriodic IRQ rate is %ldHz.\n", rate);
+
+	fprintf(stderr, "Counting 20 interrupts at:");
+	fflush(stderr);
+
+	/* The frequencies 128Hz, 256Hz, ... 8192Hz are only allowed for root. */
+	for (rate = 2; rate <= 64; rate *= 2) {
+		ret = ioctl(fd, RTC_IRQP_SET, rate);
+		if (ret == -1) {
+			/* not all RTCs can change their periodic IRQ rate */
+			if (errno == ENOTTY) {
+				fprintf(stderr, "\n...Periodic IRQ rate is fixed\n");
+				return ret;
+			}
+			perror("RTC_IRQP_SET ioctl");
+			exit(errno);
+		}
+
+		fprintf(stderr, "\n%ldHz:\t", rate);
+		fflush(stderr);
+
+		/* Enable periodic interrupts */
+		ret = ioctl(fd, RTC_PIE_ON, 0);
+		if (ret == -1) {
+			perror("RTC_PIE_ON ioctl");
+			exit(errno);
+		}
+
+		for (int i = 1; i < 21; i++) {
+			/* This blocks */
+			ret = read(fd, &data, sizeof(unsigned long));
+			if (ret == -1) {
+				perror("read");
+				exit(errno);
+			}
+			fprintf(stderr, " %d",i);
+			fflush(stderr);
+		}
+
+		/* Disable periodic interrupts */
+		ret = ioctl(fd, RTC_PIE_OFF, 0);
+		if (ret == -1) {
+			perror("RTC_PIE_OFF ioctl");
+			exit(errno);
+		}
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
-	int i, fd, retval, irqcount = 0;
-	unsigned long tmp, data;
+	int fd;
 
 	parse_args(argc, argv);
 	print_options();
@@ -288,71 +355,12 @@ int main(int argc, char **argv)
 		test_update(fd);
 	} else if (!strcmp(cmd, "alarm")) {
 		test_alarm(fd);
+	} else if (!strcmp(cmd, "periodic")) {
+		test_periodic(fd);
 	} else {
 		printf("invalid command %s\n", cmd);
 	}
 	goto done;
-
-	/* Read periodic IRQ rate */
-	retval = ioctl(fd, RTC_IRQP_READ, &tmp);
-	if (retval == -1) {
-		/* not all RTCs support periodic IRQs */
-		if (errno == ENOTTY) {
-			fprintf(stderr, "\nNo periodic IRQ support\n");
-			goto done;
-		}
-		perror("RTC_IRQP_READ ioctl");
-		exit(errno);
-	}
-	fprintf(stderr, "\nPeriodic IRQ rate is %ldHz.\n", tmp);
-
-	fprintf(stderr, "Counting 20 interrupts at:");
-	fflush(stderr);
-
-	/* The frequencies 128Hz, 256Hz, ... 8192Hz are only allowed for root. */
-	for (tmp=2; tmp<=64; tmp*=2) {
-
-		retval = ioctl(fd, RTC_IRQP_SET, tmp);
-		if (retval == -1) {
-			/* not all RTCs can change their periodic IRQ rate */
-			if (errno == ENOTTY) {
-				fprintf(stderr,
-					"\n...Periodic IRQ rate is fixed\n");
-				goto done;
-			}
-			perror("RTC_IRQP_SET ioctl");
-			exit(errno);
-		}
-
-		fprintf(stderr, "\n%ldHz:\t", tmp);
-		fflush(stderr);
-
-		/* Enable periodic interrupts */
-		retval = ioctl(fd, RTC_PIE_ON, 0);
-		if (retval == -1) {
-			perror("RTC_PIE_ON ioctl");
-			exit(errno);
-		}
-
-		for (i=1; i<21; i++) {
-			/* This blocks */
-			retval = read(fd, &data, sizeof(unsigned long));
-			if (retval == -1) {
-				perror("read");
-				exit(errno);
-			}
-			fprintf(stderr, " %d",i);
-			fflush(stderr);
-			irqcount++;
-		}
-
-		/* Disable periodic interrupts */
-		retval = ioctl(fd, RTC_PIE_OFF, 0);
-		if (retval == -1) {
-			perror("RTC_PIE_OFF ioctl");
-			exit(errno);
-		}
-	}
 
 done:
 	fprintf(stderr, "\n*** Test complete ***\n");
