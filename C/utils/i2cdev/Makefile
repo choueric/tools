@@ -12,4 +12,5 @@ clean:
 	rm -f $(EXEC) *.o core
 
 install:
-	scp $(SRC) Makefile ubuntu@test:~/rtc/
+	@#scp $(SRC) Makefile ubuntu@test:~/rtc/
+	@sudo cp -v $(EXEC) /home/zhs/workspace/StreamArtPro/tools/mnt/home/root
