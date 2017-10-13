@@ -1,36 +1,35 @@
 #include <stdio.h>
-#include <dlfcn.h>
 
 #include <add.h>
 
-static void *pHandle = NULL;
-static int (*addFunc)(int x,int y) = NULL;
+#include "dynlink_loader.h"
 
-static void init_lib()
+typedef int (tAddFunc)(int x,int y);
+
+typedef struct VendorFuncs {
+	void *lib;
+	tAddFunc *add;
+}VendorFuncs;
+
+
+static int init_lib(struct VendorFuncs **ppFuncs)
 {
-	if (pHandle)
-		return;
+	GENERIC_LOAD_FUNC_PREAMBLE(VendorFuncs, ppFuncs, "/tmp/libvendor.so");
 
-	pHandle = dlopen("/tmp/libvendor.so", RTLD_NOW);
-	if (pHandle == NULL) {
-		printf("++ dlopen failed: %s\n", dlerror());
-		return;
-	}
+	LOAD_SYMBOL(add, tAddFunc, "add");
 
-	addFunc = dlsym(pHandle, "add");
-	if (addFunc == NULL) {
-		printf("++ dlsym failed: %s\n", dlerror());
-		return;
-	}
+	GENERIC_LOAD_FUNC_FINALE(ppFuncs);
 }
 
 int triadd(int x, int y, int z)
 {
-	init_lib();
-	if (addFunc != NULL)
-		return addFunc(addFunc(x, y), z);
-	else
-		printf("++ add is NULL\n");
+	VendorFuncs *vFuncs;
 
-	return 0;
+	int ret = init_lib(&vFuncs);
+	if (ret != 0) {
+		printf("!! load symbol add failed: %d\n", ret);
+		return 0;
+	}
+
+	return vFuncs->add(vFuncs->add(x, y), z);
 }
