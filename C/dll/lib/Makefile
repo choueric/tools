@@ -6,3 +6,6 @@ $(LIB):$(SRC)
 
 clean:
 	rm -rf *.o *.so *.gch
+
+install:
+	install $(LIB) /tmp

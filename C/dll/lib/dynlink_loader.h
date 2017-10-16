@@ -27,7 +27,7 @@
 
 #define LOAD_LIBRARY(l, path)                                     \
     do {                                                          \
-        if (!((l) = dlopen(path, RTLD_LAZY))) {                   \
+        if (!((l) = dlopen(path, RTLD_NOW))) {                   \
             printf("!! Cannot load %s (%s)\n", path, dlerror()); \
             ret = EAGAIN;                                \
             goto error;                                           \
