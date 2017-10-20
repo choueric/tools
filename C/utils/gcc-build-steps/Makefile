@@ -1,5 +1,6 @@
 #CC=arm-none-linux-gnueabi-gcc
-CC=arm-arago-linux-gnueabi-gcc
+#CC=arm-arago-linux-gnueabi-gcc
+CC=arm-linux-gnueabihf-gcc
 #CC=gcc
 EXEC=test
 FLAGS=-mfpu=neon -mfloat-abi=hard
@@ -12,7 +13,6 @@ all:main.c
 
 $(EXEC):main.c
 	$(CC) -Wall main.c -o $(EXEC)
-
 
 clean:
 	rm -rf $(EXEC) *.i *.o *.s

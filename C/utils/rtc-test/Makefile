@@ -1,4 +1,4 @@
-CC = gcc
+CC = arm-hisiv600-linux-gcc
 FLAGS = -Wall -g -Werror -std=c11
 
 SRC = main.c args.c

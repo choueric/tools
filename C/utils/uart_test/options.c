@@ -1,3 +1,4 @@
+
 static char *device = "/dev/ttyS0";
 static int loop = 0;
 

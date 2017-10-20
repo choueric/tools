@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <linux/fb.h>
 #include <jpeglib.h>
 
-void savetojpeg(unsigned char *img, int width, int height)
+static void savetojpeg(uint8_t *img, int width, int height)
 {
    unsigned char *buffer, *src, *dest;
    unsigned char *line;
@@ -43,7 +45,7 @@ void savetojpeg(unsigned char *img, int width, int height)
    /* transform 4-byte(framebuffer raw data) to 3-byte */
    length = width * height;
    buffer = (unsigned char *)malloc(sizeof(unsigned char)*length*3);
-   for (i=0,src=img,dest=buffer;i<length;i+=3,src+=4,dest+=3)>
+   for (i=0, src=img, dest=buffer; i<length; i+=3,src+=4,dest+=3) {
        *dest = *src;
        *(dest+1) = *(src+1);
        *(dest+2) = *(src+2);
@@ -51,7 +53,7 @@ void savetojpeg(unsigned char *img, int width, int height)
 
    line_length = width * 3;
    /* write image */
-   for (i=0,line=buffer;i<height;i++,line+=line_length)>
+   for (i=0,line=buffer;i<height;i++,line+=line_length)
        jpeg_write_scanlines(&jpeg, &line, 1);
 
    jpeg_finish_compress(&jpeg);
@@ -64,7 +66,7 @@ void savetojpeg(unsigned char *img, int width, int height)
    free(buffer);
 }
 
-int main(int argc, char* argv[], char *envp[])
+int main(int argc, char* argv[])
 {
    int fb;
    caddr_t mem_map;
@@ -97,7 +99,7 @@ int main(int argc, char* argv[], char *envp[])
        exit(1);
    }
 
-   savetojpeg(mem_map, vinfo.xres, vinfo.yres);
+   savetojpeg((uint8_t *)mem_map, vinfo.xres, vinfo.yres);
 
    close(fb);
 

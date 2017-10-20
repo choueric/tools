@@ -1,15 +1,14 @@
-#CC = gcc
-CC = arm-arago-linux-gnueabi-gcc
-FLAGS = -Wall -g -Werror
+TARGET = $(shell basename $(shell pwd))
 
-SRC = main.c
-EXEC = test
+SRCS := $(shell ls *.c)
 
-$(EXEC):$(SRC)
-	$(CC) $(FLAGS) $(SRC) -o $(EXEC)
+CFLAGS += -Wall -g -fdiagnostics-color=auto
 
-clean:
-	rm -f $(EXEC) *.o core
+LDFLAGS ?=
 
-install:$(EXEC)
-	@cp -v $(EXEC) $(HOME)/workspace/tftphome
+LOCAL_LDFLAGS = -lpthread
+
+export CFLAGS
+export LDFLAGS
+
+include ../Makefile

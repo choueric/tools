@@ -1,14 +1,14 @@
-CC = gcc
-FLAGS = -Wall -g -Werror
+TARGET = $(shell basename $(PWD))
 
-SRC = bitop.c
-EXEC = test
+SRCS := bufhead.c main.c
 
-$(EXEC):$(SRC)
-	$(CC) $(FLAGS) $(SRC) -o $(EXEC)
+CFLAGS += -Wall -g -fdiagnostics-color=auto
 
-clean:
-	rm -f $(EXEC) *.o core
+LDFLAGS ?=
 
-install:$(EXEC)
-	@cp -v $(EXEC) $(HOME)/workspace/tftphome
+LOCAL_LDFLAGS = -lpthread
+
+export CFLAGS
+export LDFLAGS
+
+include ../Makefile

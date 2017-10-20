@@ -1,14 +1,18 @@
-CC = gcc
-FLAGS = -Wall -g -Werror -std=c11
+TARGET = $(shell basename $(shell pwd))
 
-SRC = main.c  queue.c
-EXEC = $(shell basename $(PWD))
+SRCS := $(shell ls *.c)
 
-$(EXEC):$(SRC)
-	$(CC) $(FLAGS) $(SRC) -o $(EXEC)
+CFLAGS += -Wall -Werror -std=c11 -g -fdiagnostics-color=auto
 
-clean:
-	rm -f $(EXEC) *.o core
+LDFLAGS ?=
+
+LOCAL_LDFLAGS =
+
+export CFLAGS
+export LDFLAGS
+
+include ../Makefile
 
 install:
 	scp $(SRC) Makefile ubuntu@test:~/rtc/
+

@@ -1,13 +1,16 @@
 CC=/home/zhs/workspace/ti8107/toolchain/cgt_a8/arago/linux-devkit/bin/arm-arago-linux-gnueabi-gcc
-EXEC=gv7600
-SRC=main.c bus_spidev.c bus_spidev.h
 
+TARGET = $(shell basename $(PWD))
 
-test:$(SRC)
-	$(CC) -Wall -g $(SRC) -o $(EXEC)
+SRCS := $(shell ls *.c)
 
-clean:
-	@rm -rf $(EXEC)
+CFLAGS = -Wall -g 
 
-install:
-	@cp -v $(EXEC) ~/workspace/tftphome
+LDFLAGS ?=
+
+LOCAL_LDFLAGS = -lpthread
+
+export CFLAGS
+export LDFLAGS
+
+include ../Makefile

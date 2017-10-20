@@ -1,6 +1,14 @@
-EXEC=fbdev2jpg
-$(EXEC):main.c
-	gcc -o $(EXEC) main.c -ljpeg
+TARGET = $(shell basename $(shell pwd))
 
-clean:
-	rm -rf *.o $(EXEC)
+SRCS := $(shell ls *.c)
+
+CFLAGS += -Wall -g -fdiagnostics-color=auto
+
+LDFLAGS ?=
+
+LOCAL_LDFLAGS = -ljpeg
+
+export CFLAGS
+export LDFLAGS
+
+include ../Makefile

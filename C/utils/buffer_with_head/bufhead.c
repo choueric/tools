@@ -1,12 +1,6 @@
-#pragma pack(1)
-struct bufhead {
-    int len;
-    int count;
-    char buf[1];
-};
-#pragma pack()
-
-typedef char *buf_t;
+#include "bufhead.h"
+#include <string.h>
+#include <stdlib.h>
 
 buf_t new_buf(size_t len)
 {
@@ -27,7 +21,13 @@ buf_t new_buf(size_t len)
     return head->buf;
 }
 
-struct bufhead *get_bufhead(buf_t buf)
+void free_buf(buf_t buf)
 {
-    return (struct bufhead *)(buf - sizeof(struct bufhead) + 1);
+	bufhead *pBufHead = get_bufhead(buf);
+	free(pBufHead);
+}
+
+bufhead *get_bufhead(buf_t buf)
+{
+    return (bufhead *)(buf - sizeof(bufhead) + 1);
 }

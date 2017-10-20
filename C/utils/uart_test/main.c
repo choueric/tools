@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <string.h>
+#include <strings.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <math.h>
@@ -15,9 +16,17 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#include <unistd.h>
+#include <getopt.h>
 #include "options.c"
 
 #define SLEEP_TIME 1  // second
+
+typedef struct context {
+	int fd;
+} context;
+
+context g_ctx;
 
 static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int nStop)
 {
@@ -105,7 +114,7 @@ static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int 
     return 0;
 }
 
-static int set_flag(int fd, int flags)
+int set_flag(int fd, int flags)
 {
     int val=-1;
     if ((val=fcntl(fd, F_GETFL, 0))>=0) {
@@ -115,7 +124,7 @@ static int set_flag(int fd, int flags)
 	return (val>=0)?1:0;
 }
 
-static int clr_flag(int fd, int flags)
+int clr_flag(int fd, int flags)
 {
     int val=-1;
     if ((val=fcntl(fd, F_GETFL, 0))>=0) {
@@ -161,7 +170,8 @@ static void *read_thread(void *data)
 	int ret = 0;
 	char *recv = NULL;
 	int size = 128;
-	int fd = (int)data;
+	context *ctx = (context *)data;
+	int fd = ctx->fd;
 
 	recv = malloc(size * sizeof(char));
 	if (recv == NULL) {
@@ -186,12 +196,13 @@ static void *read_thread(void *data)
 	return NULL;
 }
 
-static int test_loop(int fd, char *buf, int size)
+static int test_loop(context *ctx, char *buf, int size)
 {
 	int ret = 0;
 	pthread_t pid;
+	int fd = ctx->fd;
 
-	pthread_create(&pid, NULL, read_thread, fd);
+	pthread_create(&pid, NULL, read_thread, (void *)ctx);
 
 	while (1) {
 		printf("--> write %s\n", buf);
@@ -224,6 +235,7 @@ int main(int argc, char **argv)
 		printf("open uart error: %d\n", fd);
 		return -1;
 	}
+	g_ctx.fd = fd;
 
 	if (config_uart(fd, bdrate, 8, 'E', 1) < 0) {
 		printf("config uart failed!\n");
@@ -231,7 +243,7 @@ int main(int argc, char **argv)
 	}
 
 	if (loop) {
-		ret = test_loop(fd, send_buf, sizeof(send_buf));
+		ret = test_loop(&g_ctx, send_buf, sizeof(send_buf));
 	} else {
 		ret = test_write(fd, send_buf, sizeof(send_buf));
 	}
