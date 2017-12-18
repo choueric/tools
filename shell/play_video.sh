@@ -13,10 +13,12 @@ elif [[ $FMT == "i420" ]]; then
 elif [[ $FMT == "rgba" ]]; then
 	FROMAT=11
 elif [[ $FMT == "h264" ]]; then
-	mplayer -fps 30 -fs $FILE
+	mplayer -fps 30 $FILE
 	exit 0
 else
 	echo "invalid format"
+	echo "Usage: play_video <file> <fmt> [width] [height]"
+	echo "  fmt: nv12, i420, rgba, h264"
 	exit 1
 fi
 
