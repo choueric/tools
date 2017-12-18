@@ -1,17 +1,14 @@
-CC = gcc
-FLAGS = -rdynamic -Wall -g -Werror
+TARGET = $(shell basename $(shell pwd))
+SRCS := $(shell ls *.c)
+CFLAGS += -Wall -Werror -g -fdiagnostics-color=auto -rdynamic
 
-SRC = main.c
-EXEC = test
+LDFLAGS ?=
+LOCAL_LDFLAGS =
 
-$(EXEC):$(SRC)
-	$(CC) $(FLAGS) $(SRC) -o $(EXEC)
+export CFLAGS
+export LDFLAGS
 
-clean:
-	rm -f $(EXEC) *.o core
+include ../Makefile
 
-install:$(EXEC)
-	@cp -v $(EXEC) $(HOME)/workspace/tftphome
-
-symbol:$(EXEC)
-	objdump -t $(EXEC) > symbol
+symbol:
+	nm -a $(TARGET) | sort

@@ -2,6 +2,17 @@
 #include <execinfo.h>
 #include <stdlib.h>
 
+void dump_stack()
+{
+	void* callstack[128];
+	int i, frames = backtrace(callstack, 128);
+	char** strs = backtrace_symbols(callstack, frames);
+	for (i = 0; i < frames; ++i) {
+		printf("== %s\n", strs[i]);
+	}
+	free(strs);
+}
+
 static void print_stack(void)
 {
 #define SIZE 100
@@ -19,7 +30,7 @@ static void print_stack(void)
 	}
 
 	for (j = 0; j < nptrs; j++)
-		printf("%s\n", strings[j]);
+		printf("== %s\n", strings[j]);
 
 	free(strings);
 #undef SIZE
