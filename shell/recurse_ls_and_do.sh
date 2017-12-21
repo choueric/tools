@@ -7,6 +7,7 @@ CMD_UNZIP="unzip"
 CMD_CONVERT="convert"
 CMD_RESUFFIX="resuffix"
 CMD_CONVERT_PIC="conpic"
+CMD_ID3V2="id3v2"
 
 printUsage() {
 	echo "Usage: $0 <command>\nAvailable commands are:"
@@ -14,6 +15,7 @@ printUsage() {
 	echo "  - $CMD_CONVERT\t: <format>, convert files with suffix <format> into mp3."
 	echo "  - $CMD_RESUFFIX\t: <old> <new>, rename suffix from <old> to <new>."
 	echo "  - $CMD_CONVERT_PIC\t: <old> <new>, convert picture from <old> to <new>."
+	echo "  - $CMD_ID3V2\t: set track tag of all mp3 files in current directory."
 	exit 1
 }
 
@@ -71,10 +73,21 @@ unzipFiles() {
 	done
 }
 
+set_track_tag() {
+	SUFFIX=mp3
+	for f in *.${SUFFIX}
+	do
+		b=`basename -s .${SUFFIX} "$f"`
+		track=`echo $b | cut -d '_' -f 4`
+		id3v2 -T $track $f
+	done
+}
+
 case "$1" in
 	$CMD_UNZIP) unzipFiles;;
 	$CMD_CONVERT) convertAudio $2;;
 	$CMD_RESUFFIX) resuffix $2 $3;;
 	$CMD_CONVERT_PIC) convertPic $2 $3;;
+	$CMD_ID3V2) set_track_tag;;
 	*) printUsage;;
 esac
