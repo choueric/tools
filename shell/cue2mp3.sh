@@ -10,17 +10,18 @@ if [[ $# < 1 ]];then
 	exit 1
 fi
 
-APPENDIX="wav"
-
-NAME=`basename "$1" .${APPENDIX}`
+SUFFIX="${1##*.}"
+NAME=`basename "$1" .${SUFFIX}`
 CUENAME="${NAME}.cue"
+
 
 #ENCODE=`vim ${NAME}.cue  -c 'let $enc = &fileencoding | execute "silent !echo $enc" | q'`
 ENCODE=gb18030
 
+echo $SUFFIX
 echo "convert '$NAME'"
 
-avconv -i "${NAME}.${APPENDIX}" -b 320k "${NAME}.mp3"
+avconv -i "${NAME}.${SUFFIX}" -b:a 320k "${NAME}.mp3"
 
 echo "cue file encoding: $ENCODE"
 iconv -f "$ENCODE" -t utf8 "${CUENAME}" -o "${CUENAME}_utf8.cue"
