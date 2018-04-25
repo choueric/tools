@@ -1,15 +1,14 @@
-#CC=gcc
-CC = /home/zhs/workspace/ti8107/toolchain/cgt_a8/arago/linux-devkit/bin/arm-arago-linux-gnueabi-gcc
+TARGET = $(shell basename $(shell pwd))
 
-EXEC=check
-FLAGS=-Wall -g 
+SRCS := $(shell ls *.c)
 
-$(EXEC):*.c
-	$(CC) $(FLAGS) $(CFLAGS_ABI) main.c -o $(EXEC)
+CFLAGS += -Wall -Werror -std=c11 -g -fdiagnostics-color=auto
 
-cp:
-	cp $(EXEC) /home/zhs/workspace/tftphome
+LDFLAGS ?=
 
-clean:
-	rm -f $(EXEC)
+LOCAL_LDFLAGS =
 
+export CFLAGS
+export LDFLAGS
+
+include ../Makefile
