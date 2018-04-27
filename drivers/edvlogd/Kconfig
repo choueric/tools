@@ -1,0 +1,10 @@
+#
+# edvlogd configuration
+#
+
+config EDVLOGD
+	bool "edvlogd"
+	help
+		this driver loop-buffer log message. When user-space application read
+		the device node, send log message.
+
