@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "bitop.h"
+#include "print.h"
 
 static void test_equal(uint8_t a, uint8_t b)
 {
@@ -55,9 +56,10 @@ int main()
 
 	test_bit_mask();
 
+	char str_buf[128] = {0};
 	while (s) {
 		ret = ffs(s);
-		printf("%02x -> %d\n", s, ret);
+		printf("%02x(%s) -> %d\n", s, bin_str(&s, 1, str_buf, 128), ret);
 		s &= ~BIT((ret - 1));
 	}
 
