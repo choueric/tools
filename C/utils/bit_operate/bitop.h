@@ -1,12 +1,15 @@
 #pragma once
 
+#include <stdint.h>
+
 #define BIT(n) (1 << (n))
 
-// NOTE: only for unsigned char type (8bit)
-#define BIT_MASK(a, b) (((uint8_t)-1 >> (7 - (b))) & ~((1U << (a)) - 1))
+// Create mask start from a to b. e.g. BIT_MASK(2, 3) => 0000,0110
+// Start from 0.
+#define BIT_MASK(a, b) (((uint8_t)-1 >> (7 - (b))) & ~((1U << (a)) - 1)) // for 8bit
+#define BIT_MASK_16(a, b) (((uint16_t)-1 >> (15-(b))) & ~((1U<<(a))-1))  // for 16bit
+#define BIT_MASK_32(a, b) (((uint32_t)-1 >> (31-(b))) & ~((1U<<(a))-1))  // for 32bit
 
-int MASK(int start, int len);
-int fieldValue(int val, int mask);
 
 /**
  * ffs - find first set-bit from LSB to MSB
@@ -43,4 +46,17 @@ static inline int ffs(int x)
 		r += 1;
 	}
 	return r;
+}
+
+/*
+ * mask out the value of a range filed in register
+ *
+ * e.g.: register A is 8bit, and bit[2-3] means control mode,
+ * 0: mode A, 1: mode B, 2: mode C, 3: mode D.
+ * this function get the mode value from value of register A
+ *   mode = mask_value(regVal, BIT(2) | BIT(3))
+ */
+static inline uint8_t mask_value(uint8_t val, uint8_t mask)
+{
+	return (val & mask) >> (ffs(mask) - 1);
 }

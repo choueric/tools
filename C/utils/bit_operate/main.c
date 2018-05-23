@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -13,13 +12,6 @@
 		exit(1); \
 	} \
 } while (0)
-
-static void test_bit_mask()
-{
-	for (int i = 0; i < 8; i++)
-		for (int l = 1; (i+l) < 8; l++)
-			test_equal(MASK(i, l), BIT_MASK(i, i + l-1));
-}
 
 static void test_ffs()
 {
@@ -39,33 +31,31 @@ int main()
 {
 	printf("***** build time %s %s %d %s *****\n", __TIME__,__DATE__,__GNUC__,__VERSION__);
 
-    test_equal(fieldValue(0xf0, BIT(0)), 0);
-    test_equal(fieldValue(0xf0, BIT(1)), 0);
-    test_equal(fieldValue(0xf0, BIT(2)), 0);
-    test_equal(fieldValue(0xf0, BIT(3)), 0);
-    test_equal(fieldValue(0xf0, BIT(4)), 1);
-    test_equal(fieldValue(0xf0, BIT(5)), 1);
-    test_equal(fieldValue(0xf0, BIT(6)), 1);
-    test_equal(fieldValue(0xf0, BIT(7)), 1);
+    test_equal(mask_value(0xf0, BIT(0)), 0);
+    test_equal(mask_value(0xf0, BIT(1)), 0);
+    test_equal(mask_value(0xf0, BIT(2)), 0);
+    test_equal(mask_value(0xf0, BIT(3)), 0);
+    test_equal(mask_value(0xf0, BIT(4)), 1);
+    test_equal(mask_value(0xf0, BIT(5)), 1);
+    test_equal(mask_value(0xf0, BIT(6)), 1);
+    test_equal(mask_value(0xf0, BIT(7)), 1);
 
-    test_equal(fieldValue(0xf0, BIT(2) | BIT(3)), 0);
-    test_equal(fieldValue(0xf0, BIT(3) | BIT(4)), 2);
-    test_equal(fieldValue(0xf0, BIT(4) | BIT(5)), 3);
-    test_equal(fieldValue(0xf0, BIT(6) | BIT(7)), 3);
+    test_equal(mask_value(0xf0, BIT(2) | BIT(3)), 0);
+    test_equal(mask_value(0xf0, BIT(3) | BIT(4)), 2);
+    test_equal(mask_value(0xf0, BIT(4) | BIT(5)), 3);
+    test_equal(mask_value(0xf0, BIT(6) | BIT(7)), 3);
 
-    test_equal(MASK(3, 3), 0x38);
-    test_equal(MASK(3, 4), 0x78);
-    test_equal(MASK(4, 4), 0xf0);
+    test_equal(BIT_MASK(3, 5), 0x38);
+    test_equal(BIT_MASK(3, 6), 0x78);
+    test_equal(BIT_MASK(4, 7), 0xf0);
 
-    test_equal(fieldValue(0xf0, MASK(2, 2)), 0);
-    test_equal(fieldValue(0xf0, MASK(3, 2)), 2);
-    test_equal(fieldValue(0xf0, MASK(4, 2)), 3);
-    test_equal(fieldValue(0xf0, MASK(6, 2)), 3);
-    test_equal(fieldValue(0xf0, MASK(3, 3)), 6);
-    test_equal(fieldValue(0xf0, MASK(3, 4)), 0xe);
-    test_equal(fieldValue(0xf0, MASK(4, 4)), 0xf);
-
-	test_bit_mask();
+    test_equal(mask_value(0xf0, BIT_MASK(2, 3)), 0);
+    test_equal(mask_value(0xf0, BIT_MASK(3, 4)), 2);
+    test_equal(mask_value(0xf0, BIT_MASK(4, 5)), 3);
+    test_equal(mask_value(0xf0, BIT_MASK(6, 7)), 3);
+    test_equal(mask_value(0xf0, BIT_MASK(3, 5)), 6);
+    test_equal(mask_value(0xf0, BIT_MASK(3, 6)), 0xe);
+    test_equal(mask_value(0xf0, BIT_MASK(4, 7)), 0xf);
 
 	test_ffs();
 
