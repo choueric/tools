@@ -1,7 +1,9 @@
 #!/usr/bin/awk -f
 
+# use -F to specify the filed separator
+
 BEGIN {
-	FS=":"
+	print "========================================"
 }
 
 {
