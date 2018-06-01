@@ -1,0 +1,15 @@
+- driver/nlevent.ko
+  该模块初始化netlink功能，并提供接口函数nlevent_send()让其他驱动调用。
+
+- nltest_cli/nlcli.ko
+  该模块使用nlevent驱动中的函数nlevent_send()定时发送数据给用户层。
+
+- client/listen
+  用户层程序，监听指定netlink的socket，并打印收到的信息。
+
+
+使用方法：
+1, 首先将nlevent.ko加载到内核中，建立netlink；
+2, 再将nlcli.ko加载到内核中，使用netlink定时发送消息；
+3, 运行listen程序，接收内核消息。
+

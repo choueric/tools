@@ -1,0 +1,1 @@
+cmd_/home/mindray/workspace/demo/netlink/nltest.ko := arm-none-linux-gnueabi-ld -EL -r  -T /home/mindray/workspace/t1dock/T1-docking/scripts/module-common.lds --build-id -o /home/mindray/workspace/demo/netlink/nltest.ko /home/mindray/workspace/demo/netlink/nltest.o /home/mindray/workspace/demo/netlink/nltest.mod.o
