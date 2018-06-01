@@ -8,3 +8,4 @@ typedef struct {
 
 int console_enter_raw(console_t *con);
 int console_leave_raw(console_t *con);
+int console_restore();

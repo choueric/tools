@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "console.h"
 
@@ -22,11 +23,14 @@ static inline void inc_ratio(int *p)
 		*p = v+1;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	char c = 0;
 	int ratio = 0;
 	console_t con;
+
+	if (argc >= 2 && !strcmp(argv[1], "-r"))
+		return console_restore();
 
 	printf("Press <j> to decrease, <k> to increase, <enter> quit\n");
 
