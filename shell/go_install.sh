@@ -1,16 +1,15 @@
 #!/bin/bash
 
-GO_INSTALL_DIR_DEF="/usr/local/go"
-GO_INSTALL_PATH_DEF="/usr/local"
+GO_PREFIX="$HOME/usr"
 
 function uninstall() {
-	echo "unisntall $GO_INSTALL_DIR_DEF ..."
-	sudo rm -rf $GO_INSTALL_DIR_DEF
+	echo "unisntall $GO_PREFIX/go ..."
+	rm -rf "$GO_PREFIX/go"
 }
 
 function install() {
-	echo "install $1 to $GO_INSTALL_PATH_DEF ..."
-	sudo tar -C $GO_INSTALL_PATH_DEF -xzf $1
+	echo "install $1 to $GO_PREFIX ..."
+	tar -C $GO_PREFIX -xzf $1
 }
 
 function print_usage() {
