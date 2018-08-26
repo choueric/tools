@@ -5,7 +5,7 @@
 # 2. ./vim_build.sh
 # 3. make && sudo make install
 
-# packages needed: python-dev, libgnomeui-dev
+# packages needed: python-dev, libgnomeui-dev, libxt-dev, libncurse-dev
 
 ./configure \
 	--enable-pythoninterp=yes \
