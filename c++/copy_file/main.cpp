@@ -44,7 +44,11 @@ bool copy(string const &srcFileName, string const &dstFileName)
     src.seekg(0, ios::beg);
     ofstream dest(dstFileName, ios::binary);
     dest << src.rdbuf();
-    cout << "after copy" << endl;
+    cout << "after copy: " << endl;
+    if (dest.fail()) {
+        cout << ">> failbit: " << dest.failbit << endl;
+        cout << ">> errno: " << strerror(errno) << endl;
+    }
     sleep(interval);
 
     dest.flush();
