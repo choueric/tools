@@ -46,8 +46,7 @@ blame_output = subprocess.check_output(
 author_color = {}
 commit_color = {}
 
-colors = ['grey', 'red', 'green',  'yellow',
-          'blue', 'magenta', 'cyan', 'white']
+colors = ['red', 'green',  'yellow', 'blue', 'magenta', 'cyan', 'white']
 
 commit_color_index = 0
 color_index = 0
