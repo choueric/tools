@@ -7,12 +7,13 @@ import time
 from termcolor import colored
 import math
 import pygments
-from pygments.lexers import CppLexer, PythonLexer
+from pygments.lexers import CppLexer, PythonLexer, JavaLexer
 from pygments.formatters import TerminalFormatter
 
 
 cpp_lexer = CppLexer()
 python_lexer = PythonLexer()
+java_lexer = JavaLexer()
 
 terminal_formatter = TerminalFormatter()
 
@@ -20,9 +21,11 @@ terminal_formatter = TerminalFormatter()
 def colorize_cpp(line):
     return pygments.highlight(code, cpp_lexer, terminal_formatter).rstrip("\r\n")
 
-
 def colorize_python(line):
     return pygments.highlight(code, python_lexer, terminal_formatter).rstrip("\r\n")
+
+def colorize_java(line):
+    return pygments.highlight(code, java_lexer, terminal_formatter).rstrip("\r\n")
 
 
 def number_of_lines_in_file(file_name):
@@ -100,6 +103,8 @@ for line in lines:
             code = colorize_cpp(code)
         elif fname.endswith('.py'):
             code = colorize_python(code)
+        elif fname.endswith('.java'):
+            code = colorize_java(code)
 
         print(str.format("{0} {1} {2}{3}: {4}",
             colored(commit_id, commit_color[commit_id]),
