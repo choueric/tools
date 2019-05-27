@@ -1,0 +1,10 @@
+BasedOnStyle: llvm
+IndentWidth: 4
+AccessModifierOffset: -4
+PointerAlignment: Right
+ColumnLimit: 80
+AlignConsecutiveAssignments: true
+AlignTrailingComments: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+BreakBeforeBraces: Linux
