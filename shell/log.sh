@@ -20,6 +20,10 @@ mark() {
     color_output "$CYAN" "\n>>> $1"
 }
 
+err() {
+    color_output "$RED" "$1"
+}
+
 # $1: error status
 # $2: function or operation name
 check_err() {
