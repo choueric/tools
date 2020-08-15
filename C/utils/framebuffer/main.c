@@ -14,10 +14,10 @@ static int rgb2yuv(double r, double g, double b)
     double y = 0.299 * r + 0.587 * g + 0.114 * b;
     double u = -0.147 * r - 0.289 * g + 0.436 * b;
     double v = 0.615 * r - 0.515 * g - 0.100 * b;
-
+ 
     return 0;
 }
-
+ 
 /* y 16-235, u,v 16-240 */
 static int yuv2rgb(double y, double u, double v)
 {
@@ -31,21 +31,20 @@ static int yuv2rgb(double y, double u, double v)
     double dg = y - 0.3455 * (u - 128) - 0.7169 * (v - 128);  
     double db = y + 1.779 * (u - 128); 
 #endif
-
+ 
     int r = (int)dr;
     int g = (int)dg;
     int b = (int)db;
-
+ 
     printf("(0x%02x, 0x%02x, 0x%02x) --> (%d(0x%02x), %d(0x%02x), %d(0x%02x))\n",
             (int)y, (int)u, (int)v, r, r, g, g, b, b);
-
+ 
     ret = b & 0xff;
     ret |= (g & 0xff) << 8;
     ret |= (r & 0xff) << 16;
-
+ 
     return ret;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 int full_color(char *fbp, int fbfd, int xres, int yres, int value)
@@ -115,7 +114,6 @@ static void draw_line_v(char *fbp, int x1, int y1, int x2, int y2)
 static void draw_line_oblique_down(char *fbp, int x1, int y1, int x2, int y2)
 {
 	int i, j;
-	int t = 0;
 
 	for (i = x1, j = y1; i <= x2; i++, j++) {
 		printf("    %d.%d -> %d.%d\n", i, j, i+1, j+1);
@@ -128,9 +126,8 @@ static void draw_line_oblique_down(char *fbp, int x1, int y1, int x2, int y2)
 static void draw_line_oblique_up(char *fbp, int x1, int y1, int x2, int y2)
 {
 	int i, j;
-	int t = 0;
 
-	for (i = x1, j = y1; i <= x2, j > 0; i++, j--) {
+	for (i = x1, j = y1; i <= x2 && j > 0; i++, j--) {
 		printf("    %d.%d -> %d.%d\n", i, j, i+1, j+1);
 		draw_line_v(fbp, i, j, i, j-1);
 		draw_line_h(fbp, i, j, i+1, j);
@@ -160,7 +157,7 @@ static void draw_line_oblique(char *fbp, int x1, int y1, int x2, int y2)
 }
 
 static void draw_line(char *fbp, int x1, int y1, int x2, int y2)
-{ x2--; x1--; y1--; y2--;
+{
 	if (x1 == x2)
 		draw_line_v(fbp, x1, y1, x2, y2);
 	else if (y1 == y2)
@@ -183,13 +180,12 @@ int rect_test(char *fbp, int size, int fbfd, int xres, int yres)
 
 	draw_rect(fbp, 40, 40, 50, 50);
 
-	draw_line(fbp, 100, 5, 300, 5);
+	draw_line(fbp, 0, 0, 0, yres - 1); // left line
+	draw_line(fbp, 0, 0, xres - 1, 0); // top line
 
-	draw_line(fbp, 1, 1, 1, yres - 1);
-	draw_line(fbp, 1, 1, xres - 1, 1);
-
-	draw_line(fbp, xres - 200, yres - 1, xres, yres - 1);
-	draw_line(fbp, xres , yres - 200, xres, yres);
+    printf("--> yres = %d\n", yres);
+	draw_line(fbp, 0, yres - 1, xres - 1, yres - 1); // bottom line
+	draw_line(fbp, xres - 1, 0, xres - 1, yres - 1); // right line
 
 	return 0;
 }
@@ -198,7 +194,6 @@ int line_test(char *fbp, int size, int fbfd, int xres, int yres)
 {
 	int x0, y0;
 	int x1, y1;
-	int t = 0;
 
 	while (1) {
 		int i, j;
@@ -220,8 +215,9 @@ int line_test(char *fbp, int size, int fbfd, int xres, int yres)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define T1_XRES 480
-#define T1_YRES 272
+#if 0
+#define XRES 480
+#define YRES 272
 #define T1_HFP 0x05
 #define T1_HBP 0x28
 #define T1_HSW 0x02
@@ -233,10 +229,10 @@ static void set_var_info(int fd, struct fb_var_screeninfo *var)
 {
     int ret = 0;
 
-    var->xres = T1_XRES;
-    var->yres = T1_YRES;
-    var->xres_virtual = T1_XRES;
-    var->yres_virtual = T1_YRES;
+    var->xres = XRES;
+    var->yres = YRES;
+    var->xres_virtual = XRES;
+    var->yres_virtual = YRES;
 
     var->left_margin = T1_HBP;
     var->right_margin = T1_HFP;
@@ -254,6 +250,7 @@ static void set_var_info(int fd, struct fb_var_screeninfo *var)
         perror("set to t1 failed");
     }
 }
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])  
@@ -263,13 +260,10 @@ int main(int argc, char *argv[])
 	struct fb_fix_screeninfo finfo;
 	unsigned long screensize = 0;  
 	char *fbp = 0;  
-	char *dev = NULL, *cmd = NULL;
+	char *dev = NULL;
 
 	if (argc == 2) {
 		dev = argv[1];
-	} else if (argc == 3) {
-		dev = argv[1];
-		cmd = argv[2];
 	} else if (argc == 1) {
 		dev = "/dev/fb0";
 	} else {
@@ -327,10 +321,10 @@ int main(int argc, char *argv[])
 	rect_test(fbp, screensize, fbfd, vinfo.xres, vinfo.yres);
 #endif
 
-	line_test(fbp, screensize, fbfd, vinfo.xres, vinfo.yres);
+	// line_test(fbp, screensize, fbfd, vinfo.xres, vinfo.yres);
 	
 
-	sleep(50);
+	sleep(5);
 
 	munmap(fbp, screensize);  
 	close(fbfd);  

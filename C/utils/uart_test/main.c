@@ -32,10 +32,11 @@ static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int 
 {
     struct termios newtio, oldtio;
     if (tcgetattr(fd,&oldtio) != 0) {
-    	printf("tcgetattr error \n");
+	printf("tcgetattr error \n");
         return -1;
     }
     bzero(&newtio, sizeof(newtio));
+
     newtio.c_cflag |= CLOCAL | CREAD;
     newtio.c_cflag &= ~CSIZE;
 
@@ -63,6 +64,11 @@ static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int 
         newtio.c_cflag &= ~PARENB;
         break;
     }
+
+    if (nStop == 1)
+        newtio.c_cflag &= ~CSTOPB;
+    else if (nStop == 2)
+        newtio.c_cflag |= CSTOPB;
 
     switch (nSpeed) {
     case 2400:
@@ -99,16 +105,11 @@ static int config_uart(int fd, unsigned int nSpeed, int nBits, char nEvent, int 
         break;
     }
 
-    if (nStop == 1)
-        newtio.c_cflag &= ~CSTOPB;
-    else if (nStop == 2)
-        newtio.c_cflag |= CSTOPB;
-
     newtio.c_cc[VTIME] = 0;
     newtio.c_cc[VMIN] = 1;
     tcflush (fd,TCIFLUSH);
     if ((tcsetattr(fd, TCSANOW, &newtio)) != 0) {
-    	printf("com set error.\n");
+	printf("com set error.\n");
         return -1;
     }
     return 0;
@@ -237,7 +238,7 @@ int main(int argc, char **argv)
 	}
 	g_ctx.fd = fd;
 
-	if (config_uart(fd, bdrate, 8, 'E', 1) < 0) {
+	if (config_uart(fd, bdrate, 8, 'N', 1) < 0) {
 		printf("config uart failed!\n");
 		return -1;
 	}
